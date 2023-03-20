@@ -43,7 +43,7 @@ export default function Home() {
         joinChannel?.subscribe(
             'chatInfo',
             (message: { messages: Message[] }) => {
-                setDisplayMessages(() => message.messages);
+                setMessages(() => message.messages);
             }
         );
 
@@ -70,11 +70,12 @@ export default function Home() {
         if (!userInput) return;
 
         const updateMessages = [
-            ...displayMessages,
+            ...messages,
             { role: 'user' as const, content: userInput },
         ];
 
         setMessages(() => updateMessages);
+        setLoadingState(true);
 
         channel?.broadcast('chatInfo', {
             messages: updateMessages,
@@ -94,6 +95,7 @@ export default function Home() {
         // });
 
         if (!response.ok) {
+            setLoadingState(false);
             channel?.broadcast('loadingState', { isLoading: false });
             return;
         }
@@ -101,6 +103,7 @@ export default function Home() {
         const data = response.body;
 
         if (!data) {
+            setLoadingState(false);
             channel?.broadcast('loadingState', { isLoading: false });
             return;
         }
@@ -137,16 +140,15 @@ export default function Home() {
                         ...lastMessage,
                         content: lastMessage.content + chunkValue,
                     };
-
                     channel?.broadcast('chatInfo', {
                         messages: [...messages.slice(0, -1), updatedMessage],
                     });
-
                     return [...messages.slice(0, -1), updatedMessage];
                 });
             }
         }
 
+        setLoadingState(false);
         channel?.broadcast('loadingState', { isLoading: false });
     };
 
@@ -175,7 +177,7 @@ export default function Home() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [displayMessages, messages, loadingState]);
+    }, [messages, loadingState]);
 
     return (
         <main>
@@ -186,7 +188,7 @@ export default function Home() {
 
                 <div className='w-full p-4 h-[80vh] overflow-y-auto'>
                     <div className='flex flex-col rounded-lg border-neutral-300'>
-                        {displayMessages.map((message, index) => {
+                        {messages.map((message, index) => {
                             return (
                                 <div
                                     key={index}
