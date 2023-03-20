@@ -175,7 +175,7 @@ export default function Home() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [displayMessages, messages]);
+    }, [displayMessages, messages, loadingState]);
 
     return (
         <main>
