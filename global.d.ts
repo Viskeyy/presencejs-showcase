@@ -6,12 +6,10 @@ interface Message {
 }
 
 interface UserInfo {
-    name: string,
-    color: string,
+    name: string;
+    color: string;
 }
 
 interface InputState extends UserInfo {
-    content: string,
+    content: string;
 }
-
-

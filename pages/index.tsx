@@ -2,21 +2,18 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { createPresence } from '@yomo/presence';
-import { Loading } from '@/components/Loading';
+import { Loading } from '../components/Loading';
 
 export default function Home() {
     const [channel, setChannel] = useState<any>(null);
 
-    // messages used to sending to presence , displayMessages used to show the messages form presence
     const [messages, setMessages] = useState<Message[]>([]);
     const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
 
-    // user input used to sending openai request , input state used to show the messages from presencs and contorl the input state , loadingState used to display the openai request state
     const [userInput, setUserInput] = useState<string>('');
     // const [inputState, setInputState] = useState<InputState>();
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
-    // used to auto scroll to bottom
     const bottomDiv = useRef<HTMLDivElement>(null);
     const scrollToBottom = () => {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,7 +43,7 @@ export default function Home() {
         joinChannel?.subscribe(
             'chatInfo',
             (message: { messages: Message[] }) => {
-                setDisplayMessages(message.messages);
+                setDisplayMessages(() => message.messages);
             }
         );
 
@@ -73,11 +70,11 @@ export default function Home() {
         if (!userInput) return;
 
         const updateMessages = [
-            ...messages,
+            ...displayMessages,
             { role: 'user' as const, content: userInput },
         ];
 
-        setMessages(updateMessages);
+        setMessages(() => updateMessages);
 
         channel?.broadcast('chatInfo', {
             messages: updateMessages,
@@ -178,7 +175,7 @@ export default function Home() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [displayMessages]);
+    }, [displayMessages, messages]);
 
     return (
         <main>

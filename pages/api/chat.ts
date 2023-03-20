@@ -1,9 +1,10 @@
-import { openAIStream } from '@/helper/openAIStream';
+import { NextRequest } from 'next/server';
+import { openAIStream } from '../../helper/openAIStream';
 
 export const config = {
     runtime: 'edge',
 };
-export async function POST(req: Request) {
+export default async function handler(req: NextRequest) {
     try {
         const { message } = await req.json();
         const stream = await openAIStream(message);
