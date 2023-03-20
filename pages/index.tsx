@@ -8,7 +8,6 @@ export default function Home() {
     const [channel, setChannel] = useState<any>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
-    const [displayMessages, setDisplayMessages] = useState<Message[]>([]);
 
     const [userInput, setUserInput] = useState<string>('');
     // const [inputState, setInputState] = useState<InputState>();
@@ -20,7 +19,7 @@ export default function Home() {
     };
 
     const currentConnectId = (
-        Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000
+        Math.floor(Math.random() * (1e6 - 1e5)) + 1e5
     ).toString();
 
     // const currentUser: UserInfo = {
