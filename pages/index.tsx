@@ -2,6 +2,11 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { createPresence } from '@yomo/presence';
+import {
+    createParser,
+    ParsedEvent,
+    ReconnectInterval,
+} from 'eventsource-parser';
 import { Loading } from '../components/Loading';
 
 export default function Home() {
@@ -72,10 +77,8 @@ export default function Home() {
             ...messages,
             { role: 'user' as const, content: userInput },
         ];
-
         setMessages(() => updateMessages);
         setLoadingState(true);
-
         channel?.broadcast('chatInfo', {
             messages: updateMessages,
         });
@@ -88,38 +91,38 @@ export default function Home() {
             },
             body: JSON.stringify({ message: userInput }),
         });
-
-        // channel?.broadcast('inputState', {
-        //     inputState: {},
-        // });
-
         if (!response.ok) {
             setLoadingState(false);
             channel?.broadcast('loadingState', { isLoading: false });
             return;
         }
-
-        const data = response.body;
-
+        const data = response.body?.getReader();
         if (!data) {
             setLoadingState(false);
             channel?.broadcast('loadingState', { isLoading: false });
             return;
         }
 
-        setUserInput('');
-
-        const reader = data.getReader();
         const decoder = new TextDecoder();
+        const parser = createParser(
+            (event: ParsedEvent | ReconnectInterval) => {
+                if (event.type === 'event') {
+                    const data = event.data;
+                    if (data === '[DONE]') return;
+                    const json = JSON.parse(data);
+                    chunkValue = json.choices[0].delta.content;
+                }
+            }
+        );
 
         let done = false;
         let isFirst = true;
+        let chunkValue = '';
 
         while (!done) {
-            const { value, done: doneReading } = await reader.read();
+            const { value, done: doneReading } = await data?.read();
             done = doneReading;
-            const chunkValue = decoder.decode(value);
-
+            parser.feed(decoder.decode(value));
             if (isFirst) {
                 isFirst = false;
                 setMessages((messages) => [
@@ -147,6 +150,11 @@ export default function Home() {
             }
         }
 
+        // channel?.broadcast('inputState', {
+        //     inputState: {},
+        // });
+
+        setUserInput('');
         setLoadingState(false);
         channel?.broadcast('loadingState', { isLoading: false });
     };
