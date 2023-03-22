@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, KeyboardEvent } from 'react';
 import Image from 'next/image';
 import { createPresence } from '@yomo/presence';
 import {
@@ -8,14 +8,14 @@ import {
     ReconnectInterval,
 } from 'eventsource-parser';
 import { Loading } from '../components/Loading';
+import { OnlineState } from '../components/OnlineState';
 
 export default function Home() {
     const [channel, setChannel] = useState<any>(null);
-
     const [messages, setMessages] = useState<Message[]>([]);
+    const [onlineUser, setOnlineUser] = useState<UserInfo[]>([]);
 
     const [userInput, setUserInput] = useState<string>('');
-    // const [inputState, setInputState] = useState<InputState>();
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const bottomDiv = useRef<HTMLDivElement>(null);
@@ -23,14 +23,24 @@ export default function Home() {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleHttpRequestError = () => {
+        setMessages((messages) => [
+            ...messages,
+            { role: 'assistant', content: 'Error' },
+        ]);
+        setLoadingState(false);
+
+        channel?.broadcast('chatInfo', {
+            messages: [...messages, { role: 'assistant', content: 'Error' }],
+        });
+        channel?.broadcast('loadingState', { isLoading: false });
+
+        setUserInput('');
+    };
+
     const currentConnectId = (
         Math.floor(Math.random() * (1e6 - 1e5)) + 1e5
     ).toString();
-
-    // const currentUser: UserInfo = {
-    //     name: 'user' + currentConnectId,
-    //     color: `#${currentConnectId}`,
-    // };
 
     const presenceConnect = async () => {
         const presence = await createPresence({
@@ -58,30 +68,16 @@ export default function Home() {
             }
         );
 
-        // joinChannel?.subscribe(
-        //     'inputState',
-        //     (message: { inputState: InputState }) => {
-        //         console.log(message.inputState, 'receive input state');
-        //         setInputState(message.inputState);
-        //         setUserInput(message.inputState.content);
-        //     }
-        // );
+        joinChannel?.subscribePeers((peers) => {
+            setOnlineUser(peers);
+        });
 
         setChannel(joinChannel);
     };
 
     const submitInput = async () => {
         if (!userInput) return;
-
-        const updateMessages = [
-            ...messages,
-            { role: 'user' as const, content: userInput },
-        ];
-        setMessages(() => updateMessages);
         setLoadingState(true);
-        channel?.broadcast('chatInfo', {
-            messages: updateMessages,
-        });
         channel?.broadcast('loadingState', { isLoading: true });
 
         const response = await fetch('/api/chat', {
@@ -92,14 +88,12 @@ export default function Home() {
             body: JSON.stringify({ message: userInput }),
         });
         if (!response.ok) {
-            setLoadingState(false);
-            channel?.broadcast('loadingState', { isLoading: false });
+            handleHttpRequestError();
             return;
         }
         const data = response.body?.getReader();
         if (!data) {
-            setLoadingState(false);
-            channel?.broadcast('loadingState', { isLoading: false });
+            handleHttpRequestError();
             return;
         }
 
@@ -110,7 +104,7 @@ export default function Home() {
                     const data = event.data;
                     if (data === '[DONE]') return;
                     const json = JSON.parse(data);
-                    chunkValue = json.choices[0].delta.content;
+                    chunkValue = json.choices[0].delta.content || '';
                 }
             }
         );
@@ -150,28 +144,16 @@ export default function Home() {
             }
         }
 
-        // channel?.broadcast('inputState', {
-        //     inputState: {},
-        // });
-
         setUserInput('');
         setLoadingState(false);
         channel?.broadcast('loadingState', { isLoading: false });
     };
 
-    // const syncInputState = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    //     console.log(
-    //         { ...currentUser, content: event.target.value },
-    //         'send input state'
-    //     );
-    //     console.log(inputState, 'input state brfore send');
-    //     channel?.broadcast('inputState', {
-    //         inputState: {
-    //             ...currentUser,
-    //             content: event.target.value,
-    //         },
-    //     });
-    // };
+    const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
+        setUserInput(() => event.target.value);
+        messages[messages.length - 1].content = event.target.value;
+        channel?.broadcast('chatInfo', { messages });
+    };
 
     useEffect(() => {
         if (window) {
@@ -191,6 +173,13 @@ export default function Home() {
             <div className='flex flex-col h-screen overflow-auto items-center w-2/3 max-w-[800px] mx-auto'>
                 <div className='text-gray-400 text-3xl sticky top-0 my-8'>
                     Presence real-time showcase
+                </div>
+
+                <div className='w-full'>
+                    <span className=' text-2xl'>CollabGPT</span>
+                    <span className='float-right'>
+                        <OnlineState onlineUserAmount={onlineUser.length} />
+                    </span>
                 </div>
 
                 <div className='w-full p-4 h-[80vh] overflow-y-auto'>
@@ -241,37 +230,46 @@ export default function Home() {
                 <div className='flex flex-nowrap items-center justify-center relative w-full my-8'>
                     <textarea
                         className='min-h-12 rounded-lg p-2 w-full focus:outline-none focus:ring-1 focus:ring-neutral-300 border-2 border-neutral-200'
+                        disabled={loadingState}
                         style={{ resize: 'none' }}
                         placeholder='Type a message...'
-                        // value={inputState?.content}
                         value={userInput}
                         rows={1}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        // onChange={(event) => syncInputState(event)}
-                        /** onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
-                            if (event.key === 'Enter' && event.ctrlKey) {
-                                submitInput();
+                        onChange={(event) => syncTypingState(event)}
+                        onFocus={() => {
+                            setMessages((messages) => [
+                                ...messages,
+                                {
+                                    role: 'user',
+                                    content: `user${currentConnectId} is typing...`,
+                                },
+                            ]);
+                            channel?.broadcast('loadingState', {
+                                isLoading: true,
+                            });
+                        }}
+                        onBlur={() => {
+                            if (!userInput) {
+                                setMessages((messages) => [
+                                    ...messages.slice(0, -1),
+                                ]);
+                                channel?.broadcast('chatInfo', { messages });
+                                channel?.broadcast('loadingState', {
+                                    isLoading: false,
+                                });
                             }
-                        }} **/
+                        }}
+                        onKeyDown={(
+                            event: KeyboardEvent<HTMLTextAreaElement>
+                        ) => {
+                            if (event.key === 'Enter') submitInput();
+                        }}
                     />
                     <button
                         onClick={submitInput}
                         disabled={loadingState}
-                        // disabled={loadingState || !!inputState?.name}
                         className='absolute right-2'
-                        // style={{ color: inputState?.color }}
                     >
-                        {/* {inputState?.name ? (
-                            `${inputState.name} is typing...`
-                        ) : (
-                            <Image
-                                src={'/arrow-up.svg'}
-                                alt='send arrow'
-                                width={32}
-                                height={32}
-                                className='hover:cursor-pointer rounded-full p-1 bg-blue-500 text-white hover:opacity-80'
-                            />
-                        )} */}
                         <Image
                             src={'/arrow-up.svg'}
                             alt='send arrow'
