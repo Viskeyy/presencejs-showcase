@@ -170,7 +170,7 @@ export default function Home() {
 
     return (
         <main>
-            <div className='flex flex-col h-screen overflow-auto items-center w-2/3 max-w-[800px] mx-auto'>
+            <div className='flex flex-col h-screen overflow-auto items-center w-[90vw] max-w-[800px] mx-auto'>
                 <div className='text-gray-400 text-3xl sticky top-0 my-8'>
                     Presence real-time showcase
                 </div>
@@ -199,7 +199,7 @@ export default function Home() {
                                             message.role === 'assistant'
                                                 ? 'bg-neutral-200 text-neutral-900'
                                                 : 'bg-blue-500 text-white'
-                                        } rounded-2xl px-4 py-2 max-w-[67%] whitespace-pre-wrap`}
+                                        } rounded-2xl px-4 py-2 max-w-[75%] whitespace-pre-wrap`}
                                         style={{ overflowWrap: 'anywhere' }}
                                     >
                                         {message.content}
@@ -229,7 +229,7 @@ export default function Home() {
 
                 <div className='flex flex-nowrap items-center justify-center relative w-full my-8'>
                     <textarea
-                        className='min-h-12 rounded-lg p-2 w-full focus:outline-none focus:ring-1 focus:ring-neutral-300 border-2 border-neutral-200'
+                        className='min-h-12 rounded-lg p-2 w-full whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-neutral-300 border-2 border-neutral-200'
                         disabled={loadingState}
                         style={{ resize: 'none' }}
                         placeholder='Type a message...'
