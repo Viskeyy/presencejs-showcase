@@ -95,7 +95,9 @@ export default function Home() {
             appId: process.env.NEXT_PUBLIC_PRESENCE_APP_KEY,
         });
 
-        const joinChannel = presence.joinChannel('testpassdeltamessage');
+        const joinChannel = presence.joinChannel(
+            process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
+        );
 
         joinChannel?.subscribe('chatInfo', (message: Message) => {
             handleReceiveDelta(message);
