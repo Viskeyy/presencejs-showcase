@@ -23,8 +23,8 @@ export default function Home() {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const appendMessages = async (deltaMessage: Message) => {
-        await channel?.broadcast('chatInfo', { deltaMessage });
+    const appendMessages = (deltaMessage: Message) => {
+        channel?.broadcast('chatInfo', { ...deltaMessage });
         setMessages((messages) => [...messages, deltaMessage]);
     };
 
@@ -33,18 +33,18 @@ export default function Home() {
             const lastMessage = messages[messages.length - 1];
             const updatedMessage = {
                 ...lastMessage,
-                content: lastMessage.content || '' + deltaMessage.content,
+                content: lastMessage?.content || '' + deltaMessage.content,
             };
             return [...messages.slice(0, -1), updatedMessage];
         });
     };
 
-    const syncLoadingState = async (state: boolean) => {
-        await channel?.broadcast('loadingState', { isLoading: state });
+    const syncLoadingState = (state: boolean) => {
+        channel?.broadcast('loadingState', { isLoading: state });
         setLoadingState(state);
     };
-    const syncMessages = async (deltaMessage: Message) => {
-        await channel?.broadcast('chatInfo', { deltaMessage });
+    const syncMessages = (deltaMessage: Message) => {
+        channel?.broadcast('chatInfo', { ...deltaMessage });
         modifyLastMessages(deltaMessage);
     };
 
@@ -74,8 +74,8 @@ export default function Home() {
             process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
         );
 
-        joinChannel?.subscribe('chatInfo', (deltaMessage: Message) => {
-            modifyLastMessages(deltaMessage);
+        joinChannel?.subscribe('chatInfo', (message: Message) => {
+            modifyLastMessages(message);
         });
 
         joinChannel?.subscribe(
@@ -148,10 +148,19 @@ export default function Home() {
         syncLoadingState(false);
     };
 
-    const syncTypingState = async (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setUserInput(() => event.target.value);
-        messages[messages.length - 1].content = event.target.value;
-        await channel?.broadcast('chatInfo', {
+
+        setMessages((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const updatedMessage = {
+                ...lastMessage,
+                content: event.target.value,
+            };
+            return [...messages.slice(0, -1), updatedMessage];
+        });
+
+        channel?.broadcast('chatInfo', {
             role: messages[messages.length - 1].role,
             content: event.target.value,
             messageId: messages[messages.length - 1].messageId,
@@ -250,12 +259,6 @@ export default function Home() {
                             });
                         }}
                         onBlur={() => {
-                            // if (!userInput) {
-                            //     setMessages((messages) => [
-                            //         ...messages.slice(0, -1),
-                            //     ]);
-                            // }
-                            // channel?.broadcast('chatInfo', {});
                             channel?.broadcast('loadingState', {
                                 isLoading: false,
                             });
