@@ -25,12 +25,15 @@ export default function Home() {
 
     const handleReceiveDelta = (deltaMessage: Message) => {
         console.log(deltaMessage, 'receive message');
-        if (deltaMessage?.state === 'inputStart') {
+        if (deltaMessage?.state === 'input') {
             setMessages(() => [...messages, deltaMessage]);
             return;
         }
-
-        // modifyLastMessages(deltaMessage);
+        if (deltaMessage?.state === 'deltaStart') {
+            setMessages(() => [...messages, deltaMessage]);
+            return;
+        }
+        modifyLastMessages(deltaMessage);
 
         // if (messages[messages.length - 1]?.role === deltaMessage.role) {
         //     modifyLastMessages(deltaMessage);
@@ -176,6 +179,7 @@ export default function Home() {
         });
 
         channel?.broadcast('chatInfo', {
+            state: 'input',
             role: messages[messages.length - 1].role,
             content: event.target.value,
             messageId: messages[messages.length - 1].messageId,
@@ -265,7 +269,7 @@ export default function Home() {
                         onChange={(event) => syncTypingState(event)}
                         onFocus={() => {
                             appendMessages({
-                                state: 'inputStart',
+                                state: 'input',
                                 role: 'user',
                                 content: `user${currentConnectId} is typing...`,
                                 messageId: currentConnectId,

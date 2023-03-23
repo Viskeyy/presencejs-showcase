@@ -1,7 +1,7 @@
 type Role = 'user' | 'assistant';
 
 interface Message {
-    state?: 'inputStart' | 'deltaStart';
+    state?: 'input' | 'deltaStart';
     role: Role;
     content: string;
     messageId: string;
