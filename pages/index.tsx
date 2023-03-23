@@ -24,28 +24,34 @@ export default function Home() {
     };
 
     const handleReceiveDelta = (deltaMessage: Message) => {
-        console.log(deltaMessage, 'receive message');
+        if (deltaMessage?.state === 'inputStart') {
+            setMessages((messages) => [...messages, deltaMessage]);
+        }
         if (deltaMessage?.state === 'input') {
-            setMessages(() => [...messages, deltaMessage]);
+            modifyLastUserinput(deltaMessage.content);
             return;
         }
         if (deltaMessage?.state === 'deltaStart') {
-            setMessages(() => [...messages, deltaMessage]);
+            setMessages((messages) => [...messages, deltaMessage]);
             return;
         }
         modifyLastMessages(deltaMessage);
-
-        // if (messages[messages.length - 1]?.role === deltaMessage.role) {
-        //     modifyLastMessages(deltaMessage);
-        //     return;
-        // }
     };
 
     const appendMessages = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         setMessages((messages) => [...messages, deltaMessage]);
     };
-
+    const modifyLastUserinput = (inputMessage: string) => {
+        setMessages((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const updatedMessage = {
+                ...lastMessage,
+                content: inputMessage,
+            };
+            return [...messages.slice(0, -1), updatedMessage];
+        });
+    };
     const modifyLastMessages = (deltaMessage: Message) => {
         setMessages((messages) => {
             const lastMessage = messages[messages.length - 1];
@@ -61,6 +67,7 @@ export default function Home() {
         channel?.broadcast('loadingState', { isLoading: state });
         setLoadingState(state);
     };
+
     const syncMessages = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         modifyLastMessages(deltaMessage);
@@ -72,7 +79,6 @@ export default function Home() {
             state: 'deltaStart',
             role: 'assistant',
             content: 'Error',
-            messageId: currentConnectId,
         });
         setUserInput('');
     };
@@ -135,7 +141,6 @@ export default function Home() {
             state: 'deltaStart',
             role: 'assistant',
             content: '',
-            messageId: '',
         });
 
         const decoder = new TextDecoder();
@@ -148,9 +153,9 @@ export default function Home() {
                     if (json.choices[0].finish_reason === 'stop') return;
                     const chunkValue = json.choices[0].delta.content;
                     syncMessages({
+                        state: 'delta',
                         role: 'assistant',
                         content: chunkValue,
-                        messageId: json.id,
                     });
                 }
             }
@@ -168,21 +173,11 @@ export default function Home() {
 
     const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setUserInput(() => event.target.value);
-
-        setMessages((messages) => {
-            const lastMessage = messages[messages.length - 1];
-            const updatedMessage = {
-                ...lastMessage,
-                content: event.target.value,
-            };
-            return [...messages.slice(0, -1), updatedMessage];
-        });
-
+        modifyLastUserinput(event.target.value);
         channel?.broadcast('chatInfo', {
             state: 'input',
-            role: messages[messages.length - 1].role,
+            role: 'user',
             content: event.target.value,
-            messageId: messages[messages.length - 1].messageId,
         });
     };
 
@@ -269,10 +264,9 @@ export default function Home() {
                         onChange={(event) => syncTypingState(event)}
                         onFocus={() => {
                             appendMessages({
-                                state: 'input',
+                                state: 'inputStart',
                                 role: 'user',
                                 content: `user${currentConnectId} is typing...`,
-                                messageId: currentConnectId,
                             });
                             channel?.broadcast('loadingState', {
                                 isLoading: true,
