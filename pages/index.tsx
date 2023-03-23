@@ -23,8 +23,8 @@ export default function Home() {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const appendMessages = (deltaMessage: Message) => {
-        channel?.broadcast('chatInfo', { deltaMessage });
+    const appendMessages = async (deltaMessage: Message) => {
+        await channel?.broadcast('chatInfo', { deltaMessage });
         setMessages((messages) => [...messages, deltaMessage]);
     };
 
@@ -39,12 +39,12 @@ export default function Home() {
         });
     };
 
-    const syncLoadingState = (state: boolean) => {
+    const syncLoadingState = async (state: boolean) => {
+        await channel?.broadcast('loadingState', { isLoading: state });
         setLoadingState(state);
-        channel?.broadcast('loadingState', { isLoading: state });
     };
-    const syncMessages = (deltaMessage: Message) => {
-        channel?.broadcast('chatInfo', { deltaMessage });
+    const syncMessages = async (deltaMessage: Message) => {
+        await channel?.broadcast('chatInfo', { deltaMessage });
         modifyLastMessages(deltaMessage);
     };
 
@@ -114,11 +114,7 @@ export default function Home() {
             return;
         }
 
-        setMessages((messages) => [
-            ...messages,
-            { role: 'assistant', content: '', messageId: '' },
-        ]);
-        channel?.broadcast('chatInof', {
+        appendMessages({
             role: 'assistant',
             content: '',
             messageId: '',
@@ -152,10 +148,10 @@ export default function Home() {
         syncLoadingState(false);
     };
 
-    const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const syncTypingState = async (event: ChangeEvent<HTMLTextAreaElement>) => {
         setUserInput(() => event.target.value);
         messages[messages.length - 1].content = event.target.value;
-        channel?.broadcast('chatInfo', {
+        await channel?.broadcast('chatInfo', {
             role: messages[messages.length - 1].role,
             content: event.target.value,
             messageId: messages[messages.length - 1].messageId,
@@ -254,12 +250,12 @@ export default function Home() {
                             });
                         }}
                         onBlur={() => {
-                            if (!userInput) {
-                                setMessages((messages) => [
-                                    ...messages.slice(0, -1),
-                                ]);
-                            }
-                            channel?.broadcast('chatInfo', {});
+                            // if (!userInput) {
+                            //     setMessages((messages) => [
+                            //         ...messages.slice(0, -1),
+                            //     ]);
+                            // }
+                            // channel?.broadcast('chatInfo', {});
                             channel?.broadcast('loadingState', {
                                 isLoading: false,
                             });
