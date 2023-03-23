@@ -25,8 +25,11 @@ export default function Home() {
 
     const handleReceiveDelta = (deltaMessage: Message) => {
         console.log(deltaMessage, 'receive message');
+        if (deltaMessage?.state === 'inputStart') {
+            setMessages(() => [...messages, deltaMessage]);
+            return;
+        }
 
-        // setMessages(() => [...messages, deltaMessage]);
         // modifyLastMessages(deltaMessage);
 
         // if (messages[messages.length - 1]?.role === deltaMessage.role) {
@@ -63,6 +66,7 @@ export default function Home() {
     const handleHttpRequestError = () => {
         syncLoadingState(false);
         syncMessages({
+            state: 'deltaStart',
             role: 'assistant',
             content: 'Error',
             messageId: currentConnectId,
@@ -125,7 +129,7 @@ export default function Home() {
         }
 
         appendMessages({
-            state: 'start',
+            state: 'deltaStart',
             role: 'assistant',
             content: '',
             messageId: '',
@@ -261,7 +265,7 @@ export default function Home() {
                         onChange={(event) => syncTypingState(event)}
                         onFocus={() => {
                             appendMessages({
-                                state: 'start',
+                                state: 'inputStart',
                                 role: 'user',
                                 content: `user${currentConnectId} is typing...`,
                                 messageId: currentConnectId,
