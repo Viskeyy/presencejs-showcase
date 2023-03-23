@@ -23,6 +23,18 @@ export default function Home() {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleReceiveDelta = (deltaMessage: Message) => {
+        console.log(deltaMessage, 'receive message');
+
+        // modifyLastMessages(deltaMessage);
+
+        // if (messages[messages.length - 1]?.role === deltaMessage.role) {
+        //     modifyLastMessages(deltaMessage);
+        //     return;
+        // }
+        setMessages(() => [...messages, deltaMessage]);
+    };
+
     const appendMessages = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         setMessages((messages) => [...messages, deltaMessage]);
@@ -70,16 +82,10 @@ export default function Home() {
             appId: process.env.NEXT_PUBLIC_PRESENCE_APP_KEY,
         });
 
-        const joinChannel = presence.joinChannel(
-            process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
-        );
+        const joinChannel = presence.joinChannel('testpassdeltamessage');
 
         joinChannel?.subscribe('chatInfo', (message: Message) => {
-            if (messages.length === 0) {
-                setMessages(() => [message]);
-                return;
-            }
-            modifyLastMessages(message);
+            handleReceiveDelta(message);
         });
 
         joinChannel?.subscribe(
