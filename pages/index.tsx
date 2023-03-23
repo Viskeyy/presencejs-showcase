@@ -24,8 +24,8 @@ export default function Home() {
     };
 
     const appendMessages = (deltaMessage: Message) => {
-        setMessages((messages) => [...messages, deltaMessage]);
         channel?.broadcast('chatInfo', { deltaMessage });
+        setMessages((messages) => [...messages, deltaMessage]);
     };
 
     const modifyLastMessages = (deltaMessage: Message) => {
