@@ -24,6 +24,8 @@ export default function Home() {
     };
 
     const handleReceiveDelta = (deltaMessage: Message) => {
+        console.log('deltaMessage', deltaMessage);
+
         if (deltaMessage?.state === 'inputStart') {
             setMessages((messages) => [...messages, deltaMessage]);
         }
@@ -33,6 +35,9 @@ export default function Home() {
         }
         if (deltaMessage?.state === 'deltaStart') {
             setMessages((messages) => [...messages, deltaMessage]);
+            return;
+        }
+        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
             return;
         }
         modifyLastMessages(deltaMessage);
@@ -57,7 +62,9 @@ export default function Home() {
             const lastMessage = messages[messages.length - 1];
             const updatedMessage = {
                 ...lastMessage,
-                content: lastMessage.content + deltaMessage.content,
+                content:
+                    (lastMessage.content ? lastMessage.content : '') +
+                    deltaMessage.content,
             };
             return [...messages.slice(0, -1), updatedMessage];
         });
