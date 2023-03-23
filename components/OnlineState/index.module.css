@@ -10,7 +10,7 @@
 .button:hover {
     background: rgb(59 130 246);
     color: rgb(59 130 246);
-    box-shadow: 0 0 45px rgb(59 130 246);
+    /* box-shadow: 0 0 45px rgb(59 130 246); */
 }
 
 .button::before {
