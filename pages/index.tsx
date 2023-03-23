@@ -33,7 +33,7 @@ export default function Home() {
             const lastMessage = messages[messages.length - 1];
             const updatedMessage = {
                 ...lastMessage,
-                content: lastMessage?.content || '' + deltaMessage.content,
+                content: lastMessage.content + deltaMessage.content,
             };
             return [...messages.slice(0, -1), updatedMessage];
         });
@@ -75,6 +75,10 @@ export default function Home() {
         );
 
         joinChannel?.subscribe('chatInfo', (message: Message) => {
+            if (messages.length === 0) {
+                setMessages(() => [message]);
+                return;
+            }
             modifyLastMessages(message);
         });
 
