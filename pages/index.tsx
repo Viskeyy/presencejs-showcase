@@ -23,18 +23,63 @@ export default function Home() {
         bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleHttpRequestError = () => {
-        setMessages((messages) => [
-            ...messages,
-            { role: 'assistant', content: 'Error' },
-        ]);
-        setLoadingState(false);
+    const handleReceiveDelta = (deltaMessage: Message) => {
+        if (deltaMessage?.state === 'inputStart') {
+            setMessages((messages) => [...messages, deltaMessage]);
+        }
+        if (deltaMessage?.state === 'input') {
+            modifyLastUserinput(deltaMessage.content);
+            return;
+        }
+        if (deltaMessage?.state === 'deltaStart') {
+            setMessages((messages) => [...messages, deltaMessage]);
+            return;
+        }
+        modifyLastMessages(deltaMessage);
+    };
 
-        channel?.broadcast('chatInfo', {
-            messages: [...messages, { role: 'assistant', content: 'Error' }],
+    const appendMessages = (deltaMessage: Message) => {
+        channel?.broadcast('chatInfo', { ...deltaMessage });
+        setMessages((messages) => [...messages, deltaMessage]);
+    };
+    const modifyLastUserinput = (inputMessage: string) => {
+        setMessages((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const updatedMessage = {
+                ...lastMessage,
+                content: inputMessage,
+            };
+            return [...messages.slice(0, -1), updatedMessage];
         });
-        channel?.broadcast('loadingState', { isLoading: false });
+    };
+    const modifyLastMessages = (deltaMessage: Message) => {
+        setMessages((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const updatedMessage = {
+                ...lastMessage,
+                content: lastMessage.content + deltaMessage.content,
+            };
+            return [...messages.slice(0, -1), updatedMessage];
+        });
+    };
 
+    const syncLoadingState = (state: boolean) => {
+        channel?.broadcast('loadingState', { isLoading: state });
+        setLoadingState(state);
+    };
+
+    const syncMessages = (deltaMessage: Message) => {
+        channel?.broadcast('chatInfo', { ...deltaMessage });
+        modifyLastMessages(deltaMessage);
+    };
+
+    const handleHttpRequestError = () => {
+        syncLoadingState(false);
+        syncMessages({
+            state: 'deltaStart',
+            role: 'assistant',
+            content: 'Error',
+        });
         setUserInput('');
     };
 
@@ -54,12 +99,9 @@ export default function Home() {
             process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
         );
 
-        joinChannel?.subscribe(
-            'chatInfo',
-            (message: { messages: Message[] }) => {
-                setMessages(() => message.messages);
-            }
-        );
+        joinChannel?.subscribe('chatInfo', (message: Message) => {
+            handleReceiveDelta(message);
+        });
 
         joinChannel?.subscribe(
             'loadingState',
@@ -77,8 +119,8 @@ export default function Home() {
 
     const submitInput = async () => {
         if (!userInput) return;
-        setLoadingState(true);
-        channel?.broadcast('loadingState', { isLoading: true });
+
+        syncLoadingState(true);
 
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -97,6 +139,12 @@ export default function Home() {
             return;
         }
 
+        appendMessages({
+            state: 'deltaStart',
+            role: 'assistant',
+            content: '',
+        });
+
         const decoder = new TextDecoder();
         const parser = createParser(
             (event: ParsedEvent | ReconnectInterval) => {
@@ -104,55 +152,35 @@ export default function Home() {
                     const data = event.data;
                     if (data === '[DONE]') return;
                     const json = JSON.parse(data);
-                    chunkValue = json.choices[0].delta.content || '';
+                    if (json.choices[0].finish_reason === 'stop') return;
+                    const chunkValue = json.choices[0].delta.content;
+                    syncMessages({
+                        state: 'delta',
+                        role: 'assistant',
+                        content: chunkValue,
+                    });
                 }
             }
         );
 
-        let done = false;
-        let isFirst = true;
-        let chunkValue = '';
-
-        while (!done) {
-            const { value, done: doneReading } = await data?.read();
-            done = doneReading;
+        while (true) {
+            const { value, done } = await data?.read();
+            if (done) break;
             parser.feed(decoder.decode(value));
-            if (isFirst) {
-                isFirst = false;
-                setMessages((messages) => [
-                    ...messages,
-                    { role: 'assistant', content: chunkValue },
-                ]);
-                channel?.broadcast('chatInfo', {
-                    messages: [
-                        ...messages,
-                        { role: 'assistant', content: chunkValue },
-                    ],
-                });
-            } else {
-                setMessages((messages) => {
-                    const lastMessage = messages[messages.length - 1];
-                    const updatedMessage = {
-                        ...lastMessage,
-                        content: lastMessage.content + chunkValue,
-                    };
-                    channel?.broadcast('chatInfo', {
-                        messages: [...messages.slice(0, -1), updatedMessage],
-                    });
-                    return [...messages.slice(0, -1), updatedMessage];
-                });
-            }
         }
 
         setUserInput('');
-        setLoadingState(false);
-        channel?.broadcast('loadingState', { isLoading: false });
+        syncLoadingState(false);
     };
 
     const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setUserInput(() => event.target.value);
-        messages[messages.length - 1].content = event.target.value;
-        channel?.broadcast('chatInfo', { messages });
+        modifyLastUserinput(event.target.value);
+        channel?.broadcast('chatInfo', {
+            state: 'input',
+            role: 'user',
+            content: event.target.value,
+        });
     };
 
     useEffect(() => {
@@ -188,7 +216,7 @@ export default function Home() {
                             return (
                                 <div
                                     key={index}
-                                    className={`flex flex-col m-1 ${
+                                    className={`flex flex-col m-1 min-h-6 ${
                                         message.role === 'assistant'
                                             ? 'items-start'
                                             : 'items-end'
@@ -237,27 +265,19 @@ export default function Home() {
                         rows={1}
                         onChange={(event) => syncTypingState(event)}
                         onFocus={() => {
-                            setMessages((messages) => [
-                                ...messages,
-                                {
-                                    role: 'user',
-                                    content: `user${currentConnectId} is typing...`,
-                                },
-                            ]);
+                            appendMessages({
+                                state: 'inputStart',
+                                role: 'user',
+                                content: `user${currentConnectId} is typing...`,
+                            });
                             channel?.broadcast('loadingState', {
                                 isLoading: true,
                             });
                         }}
                         onBlur={() => {
-                            if (!userInput) {
-                                setMessages((messages) => [
-                                    ...messages.slice(0, -1),
-                                ]);
-                                channel?.broadcast('chatInfo', { messages });
-                                channel?.broadcast('loadingState', {
-                                    isLoading: false,
-                                });
-                            }
+                            channel?.broadcast('loadingState', {
+                                isLoading: false,
+                            });
                         }}
                         onKeyDown={(
                             event: KeyboardEvent<HTMLTextAreaElement>
