@@ -4,9 +4,9 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
         <div className='w-full h-16 border-b border-[#34323E] flex justify-between items-center px-6'>
             <span className='text-[#64ECAD] text-sm font-bold'>CollabGPT</span>
 
-            <div className='flex flex-row justify-center items-center'>
+            <div>
                 {onlineUsers.length <= 4 ? (
-                    <div>
+                    <div className='flex'>
                         {onlineUsers.map((user, index) => {
                             return (
                                 <div key={user.id} className='-m-1'>
@@ -27,7 +27,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                         })}
                     </div>
                 ) : (
-                    <div>
+                    <div className='flex'>
                         {onlineUsers.slice(0, 4).map((user, index) => (
                             <div key={user.id} className='-ml-1'>
                                 <Image
