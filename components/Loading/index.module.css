@@ -7,7 +7,7 @@
 }
 
 .loader .circle {
-    --color: black;
+    --color: #64ecad;
     --dim: 0.45rem;
     width: var(--dim);
     height: var(--dim);

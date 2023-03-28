@@ -7,13 +7,20 @@ import {
     ParsedEvent,
     ReconnectInterval,
 } from 'eventsource-parser';
-import { Loading } from '../components/Loading';
-import { OnlineState } from '../components/OnlineState';
+import { Header } from '../components/ChatContainer/Header';
+import { MessageContainer } from '../components/ChatContainer/MessageContainer';
 
 export default function Home() {
     const [channel, setChannel] = useState<any>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
-    const [onlineUser, setOnlineUser] = useState<UserInfo[]>([]);
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            role: 'assistant',
+            state: 'deltaStart',
+            content: 'Welcome to CollabGPT!',
+            avatar: '',
+        },
+    ]);
+    const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
 
     const [userInput, setUserInput] = useState<string>('');
     const [loadingState, setLoadingState] = useState<boolean>(false);
@@ -24,8 +31,6 @@ export default function Home() {
     };
 
     const handleReceiveDelta = (deltaMessage: Message) => {
-        console.log('deltaMessage', deltaMessage);
-
         if (deltaMessage?.state === 'inputStart') {
             setMessages((messages) => [...messages, deltaMessage]);
         }
@@ -86,6 +91,7 @@ export default function Home() {
             state: 'deltaStart',
             role: 'assistant',
             content: 'Error',
+            avatar: '',
         });
         setUserInput('');
     };
@@ -93,6 +99,12 @@ export default function Home() {
     const currentConnectId = (
         Math.floor(Math.random() * (1e6 - 1e5)) + 1e5
     ).toString();
+
+    const currentUser = {
+        id: currentConnectId,
+        name: 'user' + currentConnectId,
+        avatar: 'https://images.unsplash.com/photo-1679633269554-9f31f61f38bd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwxMnx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
+    };
 
     const presenceConnect = async () => {
         const presence = await createPresence({
@@ -106,6 +118,8 @@ export default function Home() {
             process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
         );
 
+        joinChannel.updateMetadata(currentUser);
+
         joinChannel?.subscribe('chatInfo', (message: Message) => {
             handleReceiveDelta(message);
         });
@@ -118,7 +132,7 @@ export default function Home() {
         );
 
         joinChannel?.subscribePeers((peers) => {
-            setOnlineUser(peers);
+            setOnlineUsers(peers);
         });
 
         setChannel(joinChannel);
@@ -150,6 +164,7 @@ export default function Home() {
             state: 'deltaStart',
             role: 'assistant',
             content: '',
+            avatar: '',
         });
 
         const decoder = new TextDecoder();
@@ -165,6 +180,7 @@ export default function Home() {
                         state: 'delta',
                         role: 'assistant',
                         content: chunkValue,
+                        avatar: '',
                     });
                 }
             }
@@ -204,113 +220,167 @@ export default function Home() {
     }, [messages, loadingState]);
 
     return (
-        <main>
-            <div className='flex flex-col h-screen overflow-auto items-center w-[90vw] max-w-[800px] mx-auto'>
-                <div className='text-gray-400 text-3xl sticky top-0 my-8'>
-                    Presence real-time showcase
-                </div>
+        <main className='w-[100vw] h-[100vh] flex flex-col justify-between mx-auto'>
+            <Header onlineUsers={onlineUsers} />
+            <MessageContainer messages={messages} loading={loadingState} />
 
-                <div className='w-full'>
-                    <span className=' text-2xl'>CollabGPT</span>
-                    <span className='float-right'>
-                        <OnlineState onlineUserAmount={onlineUser.length} />
-                    </span>
-                </div>
-
-                <div className='w-full p-4 h-[80vh] overflow-y-auto'>
-                    <div className='flex flex-col rounded-lg border-neutral-300'>
-                        {messages.map((message, index) => {
-                            return (
-                                <div
-                                    key={index}
-                                    className={`flex flex-col m-1 min-h-6 ${
-                                        message.role === 'assistant'
-                                            ? 'items-start'
-                                            : 'items-end'
-                                    }`}
-                                >
-                                    <div
-                                        className={`flex items-center ${
-                                            message.role === 'assistant'
-                                                ? 'bg-neutral-200 text-neutral-900'
-                                                : 'bg-blue-500 text-white'
-                                        } rounded-2xl px-4 py-2 max-w-[75%] whitespace-pre-wrap`}
-                                        style={{ overflowWrap: 'anywhere' }}
-                                    >
-                                        {message.content}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {loadingState && (
-                        <div className='m-1'>
-                            <div className='flex flex-col flex-start'>
-                                <div
-                                    className='flex items-center bg-neutral-200 text-neutral-900 rounded-2xl px-4 py-2 w-fit'
-                                    style={{
-                                        overflowWrap: 'anywhere',
-                                    }}
-                                >
-                                    <Loading isShow={loadingState} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div ref={bottomDiv}></div>
-                </div>
-
-                <div className='flex flex-nowrap items-center justify-center relative w-full my-8'>
-                    <textarea
-                        className='min-h-12 rounded-lg p-2 w-full whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-neutral-300 border-2 border-neutral-200'
-                        disabled={loadingState}
-                        style={{ resize: 'none' }}
-                        placeholder='Type a message...'
-                        value={userInput}
-                        rows={1}
-                        onChange={(event) => syncTypingState(event)}
-                        onFocus={() => {
-                            appendMessages({
-                                state: 'inputStart',
-                                role: 'user',
-                                content: `user${currentConnectId} is typing...`,
-                            });
-                            channel?.broadcast('loadingState', {
-                                isLoading: true,
-                            });
-                        }}
-                        onBlur={() => {
-                            channel?.broadcast('loadingState', {
-                                isLoading: false,
-                            });
-                        }}
-                        onKeyDown={(
-                            event: KeyboardEvent<HTMLTextAreaElement>
-                        ) => {
-                            if (event.key === 'Enter') submitInput();
-                        }}
+            <div className='flex flex-nowrap items-center justify-center w-3/5 my-6 relative mx-auto'>
+                <textarea
+                    className='min-h-12 rounded-lg p-2 w-full whitespace-nowrap bg-[#171820] focus:outline-none focus:ring-1 focus:ring-neutral-300 border border-[#34323E]'
+                    disabled={loadingState}
+                    style={{ resize: 'none' }}
+                    placeholder='Type your query'
+                    value={userInput}
+                    rows={1}
+                    onChange={(event) => syncTypingState(event)}
+                    onFocus={() => {
+                        appendMessages({
+                            state: 'inputStart',
+                            role: 'user',
+                            content: `user${currentConnectId} is typing...`,
+                            avatar: currentUser.avatar,
+                        });
+                        channel?.broadcast('loadingState', {
+                            isLoading: true,
+                        });
+                    }}
+                    onBlur={() => {
+                        channel?.broadcast('loadingState', {
+                            isLoading: false,
+                        });
+                    }}
+                    onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
+                        if (event.key === 'Enter') submitInput();
+                    }}
+                />
+                <button
+                    onClick={submitInput}
+                    disabled={loadingState}
+                    className='absolute right-2'
+                >
+                    <Image
+                        src={'/send-arrow.svg'}
+                        alt='send arrow'
+                        width={24}
+                        height={24}
+                        className={`${
+                            loadingState
+                                ? 'hover:cursor-not-allowed'
+                                : 'hover:cursor-pointer'
+                        } hover:opacity-80`}
                     />
-                    <button
-                        onClick={submitInput}
-                        disabled={loadingState}
-                        className='absolute right-2'
-                    >
-                        <Image
-                            src={'/arrow-up.svg'}
-                            alt='send arrow'
-                            width={32}
-                            height={32}
-                            className={`${
-                                loadingState
-                                    ? 'hover:cursor-not-allowed'
-                                    : 'hover:cursor-pointer'
-                            } rounded-full p-1 bg-blue-500 hover:opacity-80`}
-                        />
-                    </button>
-                </div>
+                </button>
             </div>
         </main>
     );
 }
+
+// return (
+//     <main>
+//         <div className='flex flex-col h-screen overflow-auto items-center w-[90vw] max-w-[800px] mx-auto'>
+//             <div className='text-gray-400 text-3xl sticky top-0 my-8'>
+//                 Presence real-time showcase
+//             </div>
+
+//             <div className='w-full'>
+//                 <span className=' text-2xl'>CollabGPT</span>
+//                 <span className='float-right'>
+//                     <OnlineState onlineUserAmount={onlineUser.length} />
+//                 </span>
+//             </div>
+
+//             <div className='w-full p-4 h-[80vh] overflow-y-auto'>
+//                 <div className='flex flex-col rounded-lg border-neutral-300'>
+//                     {messages.map((message, index) => {
+//                         return (
+//                             <div
+//                                 key={index}
+//                                 className={`flex flex-col m-1 min-h-6 ${
+//                                     message.role === 'assistant'
+//                                         ? 'items-start'
+//                                         : 'items-end'
+//                                 }`}
+//                             >
+//                                 <div
+//                                     className={`flex items-center ${
+//                                         message.role === 'assistant'
+//                                             ? 'bg-neutral-200 text-neutral-900'
+//                                             : 'bg-blue-500 text-white'
+//                                     } rounded-2xl px-4 py-2 max-w-[75%] whitespace-pre-wrap`}
+//                                     style={{ overflowWrap: 'anywhere' }}
+//                                 >
+//                                     {message.content}
+//                                 </div>
+//                             </div>
+//                         );
+//                     })}
+//                 </div>
+
+//                 {loadingState && (
+//                     <div className='m-1'>
+//                         <div className='flex flex-col flex-start'>
+//                             <div
+//                                 className='flex items-center bg-neutral-200 text-neutral-900 rounded-2xl px-4 py-2 w-fit'
+//                                 style={{
+//                                     overflowWrap: 'anywhere',
+//                                 }}
+//                             >
+//                                 <Loading isShow={loadingState} />
+//                             </div>
+//                         </div>
+//                     </div>
+//                 )}
+
+//                 <div ref={bottomDiv}></div>
+//             </div>
+
+//             <div className='flex flex-nowrap items-center justify-center relative w-full my-8'>
+//                 <textarea
+//                     className='min-h-12 rounded-lg p-2 w-full whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-neutral-300 border-2 border-neutral-200'
+//                     disabled={loadingState}
+//                     style={{ resize: 'none' }}
+//                     placeholder='Type a message...'
+//                     value={userInput}
+//                     rows={1}
+//                     onChange={(event) => syncTypingState(event)}
+//                     onFocus={() => {
+//                         appendMessages({
+//                             state: 'inputStart',
+//                             role: 'user',
+//                             content: `user${currentConnectId} is typing...`,
+//                             avatar: 'useravatar',
+//                         });
+//                         channel?.broadcast('loadingState', {
+//                             isLoading: true,
+//                         });
+//                     }}
+//                     onBlur={() => {
+//                         channel?.broadcast('loadingState', {
+//                             isLoading: false,
+//                         });
+//                     }}
+//                     onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
+//                         if (event.key === 'Enter') submitInput();
+//                     }}
+//                 />
+//                 <button
+//                     onClick={submitInput}
+//                     disabled={loadingState}
+//                     className='absolute right-2'
+//                 >
+//                     <Image
+//                         src={'/arrow-up.svg'}
+//                         alt='send arrow'
+//                         width={32}
+//                         height={32}
+//                         className={`${
+//                             loadingState
+//                                 ? 'hover:cursor-not-allowed'
+//                                 : 'hover:cursor-pointer'
+//                         } rounded-full p-1 bg-blue-500 hover:opacity-80`}
+//                     />
+//                 </button>
+//             </div>
+//         </div>
+//     </main>
+// );
