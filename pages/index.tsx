@@ -7,6 +7,8 @@ import {
     ParsedEvent,
     ReconnectInterval,
 } from 'eventsource-parser';
+
+import { UserCursor } from '../components/UserCursor';
 import { Header } from '../components/ChatContainer/Header';
 import { MessageContainer } from '../components/ChatContainer/MessageContainer';
 
@@ -100,10 +102,13 @@ export default function Home() {
         Math.floor(Math.random() * (1e6 - 1e5)) + 1e5
     ).toString();
 
-    const currentUser = {
+    const initUser: UserInfo = {
         id: currentConnectId,
         name: 'user' + currentConnectId,
         avatar: 'https://images.unsplash.com/photo-1679633269554-9f31f61f38bd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwxMnx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
+        color: '#' + currentConnectId,
+        mouseX: 0,
+        mouseY: 0,
     };
 
     const presenceConnect = async () => {
@@ -118,7 +123,7 @@ export default function Home() {
             process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
         );
 
-        joinChannel.updateMetadata(currentUser);
+        joinChannel.updateMetadata(initUser);
 
         joinChannel?.subscribe('chatInfo', (message: Message) => {
             handleReceiveDelta(message);
@@ -221,6 +226,11 @@ export default function Home() {
 
     return (
         <main className='w-[100vw] h-[100vh] flex flex-col justify-between mx-auto'>
+            <UserCursor
+                channel={channel}
+                currentUser={initUser}
+                onlineUsers={onlineUsers}
+            />
             <Header onlineUsers={onlineUsers} />
             <MessageContainer messages={messages} loading={loadingState} />
 
@@ -238,7 +248,7 @@ export default function Home() {
                             state: 'inputStart',
                             role: 'user',
                             content: `user${currentConnectId} is typing...`,
-                            avatar: currentUser.avatar,
+                            avatar: initUser.avatar,
                         });
                         channel?.broadcast('loadingState', {
                             isLoading: true,

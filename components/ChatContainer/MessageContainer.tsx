@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Loading } from '../Loading';
+
 export const MessageContainer = (props: {
     messages: Message[];
     loading: boolean;

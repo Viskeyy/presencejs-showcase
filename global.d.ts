@@ -9,6 +9,10 @@ interface Message {
 
 interface UserInfo {
     id: string;
-    name?: string;
-    avatar?: string;
+    name: string;
+    avatar: string;
+    color: string;
+    mouseX: number;
+    mouseY: number;
+    cursorMessage?: string;
 }
