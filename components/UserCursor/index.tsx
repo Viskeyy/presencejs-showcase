@@ -1,3 +1,5 @@
+'use client';
+
 import { MyCursor } from './MyCursor';
 import { OtherCursor } from './OtherCursor';
 

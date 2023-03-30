@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, ChangeEvent, useRef } from 'react';
 import Image from 'next/image';
 import { CursorIcon } from './CursorIcon';
@@ -79,8 +81,6 @@ export const MyCursor = ({
                 mouseX: data.x,
                 mouseY: data.y,
             });
-
-            console.log('mouse move');
         });
     }, []);
 
