@@ -63,8 +63,9 @@ export const MyCursor = ({
         );
 
         movement$.subscribe((data) => {
-            const position = getMousePosition(data.x, data.y);
+            console.log('mouse move');
 
+            const position = getMousePosition(data.x, data.y);
             cursorElement.current?.style.setProperty(
                 'transform',
                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`

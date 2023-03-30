@@ -5,6 +5,8 @@ import { getMousePosition } from '../../helper/userCursorHelper';
 import { CursorIcon } from './CursorIcon';
 
 export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
+    console.log('other modified');
+
     return (
         <>
             {userList.map((user) => {
