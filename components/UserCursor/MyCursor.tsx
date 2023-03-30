@@ -13,6 +13,7 @@ export const MyCursor = ({
 }) => {
     const cursorElement = useRef<HTMLDivElement>(null);
 
+    const [currentUser, setCurrentUser] = useState<UserInfo>(user);
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
 
@@ -20,10 +21,12 @@ export const MyCursor = ({
         if (e.target.value === '/') {
             return;
         }
+
         channel.updateMetadata({
-            ...user,
+            ...currentUser,
             cursorMessage: e.target.value,
         });
+
         setInputValue(e.target.value);
     };
 
@@ -65,11 +68,19 @@ export const MyCursor = ({
                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
             );
 
+            setCurrentUser((currentUser) => ({
+                ...currentUser,
+                mouseX: data.x,
+                mouseY: data.y,
+            }));
+
             channel?.updateMetadata({
-                ...user,
+                ...currentUser,
                 mouseX: data.x,
                 mouseY: data.y,
             });
+
+            console.log('mouse move');
         });
     }, []);
 

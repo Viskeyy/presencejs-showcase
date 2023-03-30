@@ -1,21 +1,9 @@
-import { useEffect } from 'react';
 import Image from 'next/image';
 import { getMousePosition } from '../../helper/userCursorHelper';
 import { CursorIcon } from './CursorIcon';
 
 export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
-    // useEffect(() => {
-    //     userList.forEach((user) => {
-    //         const position = getMousePosition(user.mouseX, user.mouseY);
-    //         const cursorElement = document.getElementById(user.id);
-    //         if (cursorElement) {
-    //             cursorElement.style.setProperty(
-    //                 'transform',
-    //                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
-    //             );
-    //         }
-    //     });
-    // }, []);
+    console.log('other move');
 
     return (
         <>
@@ -26,7 +14,8 @@ export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
                         key={user.id}
                         className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
                         style={{
-                            transform: `translate3d(${position.mouseX}px,${position.mouseY}px,0)`,
+                            left: `${position.mouseX}px`,
+                            top: `${position.mouseY}px`,
                         }}
                     >
                         <CursorIcon color={user.color} />

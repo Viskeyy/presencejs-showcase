@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Loading } from '../Loading';
 
@@ -5,6 +6,15 @@ export const MessageContainer = (props: {
     messages: Message[];
     loading: boolean;
 }) => {
+    const bottomDiv = useRef<HTMLDivElement>(null);
+    const scrollToBottom = () => {
+        bottomDiv.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [props.messages, props.loading]);
+
     return (
         <div className='w-full flex-auto overflow-y-auto'>
             {props.messages.map((message, index) => {
@@ -42,6 +52,7 @@ export const MessageContainer = (props: {
             <div className='w-full min-h-20 flex px-[15vw] items-center p-2'>
                 <Loading isShow={props.loading} />
             </div>
+            <div ref={bottomDiv} />
         </div>
     );
 };
