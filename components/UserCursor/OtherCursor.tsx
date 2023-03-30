@@ -16,8 +16,7 @@ export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
                         key={user.id}
                         className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
                         style={{
-                            left: `${position.mouseX}px`,
-                            top: `${position.mouseY}px`,
+                            transform: `translate3d(${position.mouseX}px,${position.mouseY}px,0)`,
                         }}
                     >
                         <CursorIcon color={user.color} />

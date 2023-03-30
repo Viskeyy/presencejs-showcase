@@ -11,6 +11,7 @@ body {
     color: white;
     background-color: #15111c;
     overscroll-behavior: none;
+    cursor: none;
 }
 
 a {

@@ -24,7 +24,7 @@ export const MyCursor = ({
             return;
         }
 
-        channel.updateMetadata({
+        channel?.updateMetadata({
             ...currentUser,
             cursorMessage: e.target.value,
         });
