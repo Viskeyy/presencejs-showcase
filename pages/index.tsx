@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, ChangeEvent, KeyboardEvent } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { createPresence } from '@yomo/presence';
 import {
@@ -8,7 +9,12 @@ import {
     ReconnectInterval,
 } from 'eventsource-parser';
 
-import { UserCursor } from '../components/UserCursor';
+const UserCursor = dynamic(
+    () => import('../components/UserCursor').then((mod) => mod.UserCursor),
+    {
+        ssr: false,
+    }
+);
 import { Header } from '../components/ChatContainer/Header';
 import { MessageContainer } from '../components/ChatContainer/MessageContainer';
 
