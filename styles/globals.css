@@ -5,13 +5,13 @@
 html,
 body {
     max-width: 100vw;
-    overflow-x: hidden;
 }
 
 body {
-    color: dimgrey;
-    background-color: black;
+    color: white;
+    background-color: #15111c;
     overscroll-behavior: none;
+    cursor: none;
 }
 
 a {
