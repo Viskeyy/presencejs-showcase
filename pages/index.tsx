@@ -137,7 +137,7 @@ export default function Home() {
         );
 
         joinChannel?.subscribePeers((peers) => {
-            setOnlineUsers(peers);
+            setOnlineUsers(peers as any);
         });
 
         setChannel(joinChannel);
