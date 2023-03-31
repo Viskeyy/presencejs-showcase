@@ -38,6 +38,9 @@ export default function Home() {
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const handleReceiveDelta = (deltaMessage: Message) => {
+        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
+            return;
+        }
         if (deltaMessage?.state === 'inputStart') {
             setMessages((messages) => [...messages, deltaMessage]);
             return;
@@ -48,9 +51,6 @@ export default function Home() {
         }
         if (deltaMessage?.state === 'deltaStart') {
             setMessages((messages) => [...messages, deltaMessage]);
-            return;
-        }
-        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
             return;
         }
         modifyLastMessages(deltaMessage);
@@ -107,7 +107,7 @@ export default function Home() {
     const initUser: UserInfo = {
         id: currentConnectId,
         name: 'user' + currentConnectId,
-        avatar: 'https://images.unsplash.com/photo-1679633269554-9f31f61f38bd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwxMnx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
+        avatar: '/yomo.png',
         color: '#' + currentConnectId,
         mouseX: 0,
         mouseY: 0,

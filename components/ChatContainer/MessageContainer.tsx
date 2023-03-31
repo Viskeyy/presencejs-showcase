@@ -29,7 +29,9 @@ export const MessageContainer = (props: {
                     >
                         <div
                             className={`bg-slate-500 ${
-                                message.role === 'assistant' ? 'self-start' : ''
+                                message.role === 'assistant'
+                                    ? 'self-start'
+                                    : 'rounded-full'
                             } w-6 h-6 shrink-0`}
                         >
                             <Image
