@@ -107,7 +107,7 @@ export default function Home() {
     const initUser: UserInfo = {
         id: currentConnectId,
         name: 'user' + currentConnectId,
-        avatar: 'https://images.unsplash.com/photo-1679633269554-9f31f61f38bd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwxMnx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
+        avatar: '/yomo.png',
         color: '#' + currentConnectId,
         mouseX: 0,
         mouseY: 0,
