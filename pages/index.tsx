@@ -38,6 +38,9 @@ export default function Home() {
     const [loadingState, setLoadingState] = useState<boolean>(false);
 
     const handleReceiveDelta = (deltaMessage: Message) => {
+        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
+            return;
+        }
         if (deltaMessage?.state === 'inputStart') {
             setMessages((messages) => [...messages, deltaMessage]);
             return;
@@ -48,9 +51,6 @@ export default function Home() {
         }
         if (deltaMessage?.state === 'deltaStart') {
             setMessages((messages) => [...messages, deltaMessage]);
-            return;
-        }
-        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
             return;
         }
         modifyLastMessages(deltaMessage);

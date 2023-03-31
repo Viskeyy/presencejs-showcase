@@ -82,8 +82,6 @@ export const MyCursor = ({
                 mouseX: data.x,
                 mouseY: data.y,
             }));
-
-            // console.log('i');
         });
     }, []);
 
