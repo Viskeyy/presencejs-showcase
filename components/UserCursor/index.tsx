@@ -1,6 +1,12 @@
 'use client';
 
-import { MyCursor } from './MyCursor';
+import dynamic from 'next/dynamic';
+
+const MyCursor = dynamic(
+    () => import('./MyCursor').then((mod) => mod.MyCursor),
+    { ssr: false }
+);
+
 import { OtherCursor } from './OtherCursor';
 
 export const UserCursor = ({

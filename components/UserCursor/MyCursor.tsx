@@ -83,7 +83,7 @@ export const MyCursor = ({
                 mouseY: data.y,
             }));
         });
-    }, []);
+    }, [channel]);
 
     return (
         <div
