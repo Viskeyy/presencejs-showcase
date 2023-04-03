@@ -2,59 +2,47 @@
 import { useState, useEffect, ChangeEvent, KeyboardEvent } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { createPresence } from '@yomo/presence';
 import {
     createParser,
     ParsedEvent,
     ReconnectInterval,
 } from 'eventsource-parser';
 
-const UserCursor = dynamic(
-    () => import('../components/UserCursor').then((mod) => mod.UserCursor),
-    {
-        ssr: false,
-    }
-);
+import { presenceConnect } from '../helper/presenceConnect';
 import { Header } from '../components/ChatContainer/Header';
 import { MessageContainer } from '../components/ChatContainer/MessageContainer';
+const UserCursor = dynamic(
+    () => import('../components/UserCursor').then((mod) => mod.UserCursor),
+    { ssr: false }
+);
 
 const currentConnectId = (
     Math.floor(Math.random() * (1e6 - 1e5)) + 1e5
 ).toString();
 
+const defaultMessage: Message = {
+    role: 'assistant',
+    state: 'deltaStart',
+    content: 'Welcome to CollabGPT!',
+    avatar: '',
+};
+
+const defaultUserInfo: UserInfo = {
+    id: currentConnectId,
+    name: 'user' + currentConnectId,
+    avatar: '/yomo.png',
+    color: '#' + currentConnectId,
+    mouseX: 0,
+    mouseY: 0,
+};
+
 export default function Home() {
     const [channel, setChannel] = useState<any>(null);
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            role: 'assistant',
-            state: 'deltaStart',
-            content: 'Welcome to CollabGPT!',
-            avatar: '',
-        },
-    ]);
+    const [messages, setMessages] = useState<Message[]>([defaultMessage]);
     const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
 
     const [userInput, setUserInput] = useState<string>('');
     const [loadingState, setLoadingState] = useState<boolean>(false);
-
-    const handleReceiveDelta = (deltaMessage: Message) => {
-        if (deltaMessage.content === '\n\n' || deltaMessage.content === null) {
-            return;
-        }
-        if (deltaMessage?.state === 'inputStart') {
-            setMessages((messages) => [...messages, deltaMessage]);
-            return;
-        }
-        if (deltaMessage?.state === 'input') {
-            modifyLastUserinput(deltaMessage.content);
-            return;
-        }
-        if (deltaMessage?.state === 'deltaStart') {
-            setMessages((messages) => [...messages, deltaMessage]);
-            return;
-        }
-        modifyLastMessages(deltaMessage);
-    };
 
     const appendMessages = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
@@ -75,27 +63,25 @@ export default function Home() {
             const lastMessage = messages[messages.length - 1];
             const updatedMessage = {
                 ...lastMessage,
-                content:
-                    (lastMessage.content ? lastMessage.content : '') +
-                    deltaMessage.content,
+                content: lastMessage.content + deltaMessage.content,
             };
             return [...messages.slice(0, -1), updatedMessage];
         });
     };
 
-    const syncLoadingState = (state: boolean) => {
+    const broadcastLoadingState = (state: boolean) => {
         channel?.broadcast('loadingState', { isLoading: state });
         setLoadingState(state);
     };
 
-    const syncMessages = (deltaMessage: Message) => {
+    const broadcastMessages = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         modifyLastMessages(deltaMessage);
     };
 
     const handleHttpRequestError = () => {
-        syncLoadingState(false);
-        syncMessages({
+        broadcastLoadingState(false);
+        broadcastMessages({
             state: 'deltaStart',
             role: 'assistant',
             content: 'Error',
@@ -104,51 +90,20 @@ export default function Home() {
         setUserInput('');
     };
 
-    const initUser: UserInfo = {
-        id: currentConnectId,
-        name: 'user' + currentConnectId,
-        avatar: '/yomo.png',
-        color: '#' + currentConnectId,
-        mouseX: 0,
-        mouseY: 0,
-    };
-
-    const presenceConnect = async () => {
-        const presence = await createPresence({
-            url: 'https://prscd2.allegro.earth/v1',
-            publicKey: process.env.NEXT_PUBLIC_PRESENCE_PUBLIC_KEY,
-            id: currentConnectId,
-            appId: process.env.NEXT_PUBLIC_PRESENCE_APP_KEY,
+    const broadcastInputMessage = (event: ChangeEvent<HTMLTextAreaElement>) => {
+        setUserInput(() => event.target.value);
+        modifyLastUserinput(event.target.value);
+        channel?.broadcast('chatInfo', {
+            state: 'input',
+            role: 'user',
+            content: event.target.value,
         });
-
-        const joinChannel = presence.joinChannel(
-            process.env.NEXT_PUBLIC_PRESENCE_CHANNEL_ID as string
-        );
-
-        joinChannel.updateMetadata(initUser);
-
-        joinChannel?.subscribe('chatInfo', (message: Message) => {
-            handleReceiveDelta(message);
-        });
-
-        joinChannel?.subscribe(
-            'loadingState',
-            (message: { isLoading: boolean }) => {
-                setLoadingState(message.isLoading);
-            }
-        );
-
-        joinChannel?.subscribePeers((peers) => {
-            setOnlineUsers(peers as any);
-        });
-
-        setChannel(joinChannel);
     };
 
     const submitInput = async () => {
         if (!userInput) return;
 
-        syncLoadingState(true);
+        broadcastLoadingState(true);
 
         const response = await fetch('/api/chat', {
             method: 'POST',
@@ -183,7 +138,7 @@ export default function Home() {
                     const json = JSON.parse(data);
                     if (json.choices[0].finish_reason === 'stop') return;
                     const chunkValue = json.choices[0].delta.content;
-                    syncMessages({
+                    broadcastMessages({
                         state: 'delta',
                         role: 'assistant',
                         content: chunkValue,
@@ -200,33 +155,28 @@ export default function Home() {
         }
 
         setUserInput('');
-        syncLoadingState(false);
-    };
-
-    const syncTypingState = (event: ChangeEvent<HTMLTextAreaElement>) => {
-        setUserInput(() => event.target.value);
-        modifyLastUserinput(event.target.value);
-        channel?.broadcast('chatInfo', {
-            state: 'input',
-            role: 'user',
-            content: event.target.value,
-        });
+        broadcastLoadingState(false);
     };
 
     useEffect(() => {
         if (window) {
-            presenceConnect();
+            presenceConnect(
+                setChannel,
+                setMessages,
+                setLoadingState,
+                setOnlineUsers
+            );
         }
-        return () => {
-            channel?.leave();
-        };
-    }, []);
+        // return () => {
+        //     channel?.leave();
+        // };
+    }, [channel]);
 
     return (
         <main className='w-[100vw] h-[100vh] flex flex-col justify-between mx-auto'>
             <UserCursor
                 channel={channel}
-                currentUser={initUser}
+                currentUser={defaultUserInfo}
                 onlineUsers={onlineUsers}
             />
             <Header onlineUsers={onlineUsers} />
@@ -240,17 +190,15 @@ export default function Home() {
                     placeholder='Type your query'
                     value={userInput}
                     rows={1}
-                    onChange={(event) => syncTypingState(event)}
+                    onChange={(event) => broadcastInputMessage(event)}
                     onFocus={() => {
                         appendMessages({
                             state: 'inputStart',
                             role: 'user',
                             content: `user${currentConnectId} is typing...`,
-                            avatar: initUser.avatar,
+                            avatar: defaultUserInfo.avatar,
                         });
-                        channel?.broadcast('loadingState', {
-                            isLoading: true,
-                        });
+                        channel?.broadcast('loadingState', { isLoading: true });
                     }}
                     onBlur={() => {
                         channel?.broadcast('loadingState', {

@@ -33,22 +33,22 @@ export const MyCursor = ({
         setInputValue(e.target.value);
     };
 
-    // const keyDownHandler = (e: KeyboardEvent) => {
-    // if (e.code === 'Slash') {
-    //     setShowInput(true);
-    // }
-    // if (e.code === 'Escape') {
-    //     setInputValue('');
-    //     setShowInput(false);
-    // }
-    // };
+    const keyDownHandler = (e: KeyboardEvent) => {
+        if (e.code === 'Slash') {
+            setShowInput(true);
+        }
+        if (e.code === 'Escape') {
+            setInputValue('');
+            setShowInput(false);
+        }
+    };
 
-    // useEffect(() => {
-    //     document.addEventListener('keydown', keyDownHandler);
-    //     return () => {
-    //         document.removeEventListener('keydown', keyDownHandler);
-    //     };
-    // }, []);
+    useEffect(() => {
+        document.addEventListener('keydown', keyDownHandler);
+        return () => {
+            document.removeEventListener('keydown', keyDownHandler);
+        };
+    }, []);
 
     useEffect(() => {
         const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -71,17 +71,17 @@ export const MyCursor = ({
                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
             );
 
-            channel?.updateMetadata({
-                ...currentUser,
-                mouseX: data.x,
-                mouseY: data.y,
-            });
-
             setCurrentUser((currentUser) => ({
                 ...currentUser,
                 mouseX: data.x,
                 mouseY: data.y,
             }));
+
+            channel?.updateMetadata({
+                ...currentUser,
+                mouseX: data.x,
+                mouseY: data.y,
+            });
         });
     }, [channel]);
 
