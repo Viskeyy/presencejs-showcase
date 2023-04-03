@@ -14,11 +14,13 @@ export const MyCursor = ({
     user: UserInfo;
     channel: IChannel;
 }) => {
-    const cursorElement = useRef<HTMLDivElement>(null);
-
-    const [currentUser, setCurrentUser] = useState<UserInfo>(user);
+    // const [currentUser, setCurrentUser] = useState<UserInfo>(user);
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
+    const [mousePosition, setMousePosition] = useState({
+        mouseX: 0,
+        mouseY: 0,
+    });
 
     const onChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.value === '/') {
@@ -26,7 +28,7 @@ export const MyCursor = ({
         }
 
         channel?.updateMetadata({
-            ...currentUser,
+            ...user,
             cursorMessage: e.target.value,
         });
 
@@ -65,20 +67,10 @@ export const MyCursor = ({
 
         movement$.subscribe((data) => {
             const position = getMousePosition(data.x, data.y);
-
-            cursorElement.current?.style.setProperty(
-                'transform',
-                `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
-            );
-
-            setCurrentUser((currentUser) => ({
-                ...currentUser,
-                mouseX: data.x,
-                mouseY: data.y,
-            }));
+            setMousePosition(position);
 
             channel?.updateMetadata({
-                ...currentUser,
+                ...user,
                 mouseX: data.x,
                 mouseY: data.y,
             });
@@ -87,8 +79,10 @@ export const MyCursor = ({
 
     return (
         <div
-            ref={cursorElement}
             className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
+            style={{
+                transform: `translate3d(${mousePosition.mouseX}px,${mousePosition.mouseY}px,0)`,
+            }}
         >
             <CursorIcon color={user.color} />
             <div
