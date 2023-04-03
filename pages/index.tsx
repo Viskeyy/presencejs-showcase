@@ -107,7 +107,7 @@ export default function Home() {
     const initUser: UserInfo = {
         id: currentConnectId,
         name: 'user' + currentConnectId,
-        avatar: '/yomo.png',
+        avatar: 'https://api.dicebear.com/6.x/pixel-art/svg?seed=' + currentConnectId,
         color: '#' + currentConnectId,
         mouseX: 0,
         mouseY: 0,
