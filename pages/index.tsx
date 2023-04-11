@@ -31,7 +31,8 @@ const defaultMessage: Message = {
 const defaultUserInfo: UserInfo = {
     id: currentConnectId,
     name: 'user' + currentConnectId,
-    avatar: '/yomo.png',
+    avatar:
+        'https://api.dicebear.com/6.x/pixel-art/png?seed=' + currentConnectId,
     color: '#' + currentConnectId,
     mouseX: 0,
     mouseY: 0,
