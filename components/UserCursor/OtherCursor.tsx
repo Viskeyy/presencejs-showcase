@@ -12,14 +12,14 @@ export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
                 return (
                     <div
                         key={user.id}
-                        className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
+                        className="pointer-events-none fixed left-0 top-0 z-50 h-full w-full bg-transparent"
                         style={{
                             transform: `translate3d(${position.mouseX}px,${position.mouseY}px,0)`,
                         }}
                     >
                         <CursorIcon color={user.color} />
                         <div
-                            className={`absolute top-4 left-4 px-2 py-1`}
+                            className={`absolute left-4 top-4 px-2 py-1`}
                             style={{
                                 borderRadius: user.cursorMessage ? 30 : 15,
                                 borderTopLeftRadius: user.cursorMessage
@@ -28,23 +28,23 @@ export const OtherCursor = ({ userList }: { userList: UserInfo[] }) => {
                                 backgroundColor: user.color,
                             }}
                         >
-                            <div className='flex h-full items-center'>
+                            <div className="flex h-full items-center">
                                 <Image
-                                    className='rounded-full w-4 h-4'
+                                    className="h-4 w-4 rounded-full"
                                     src={user.avatar}
-                                    alt='avatar'
+                                    alt="avatar"
                                     width={16}
                                     height={16}
                                 />
                                 &nbsp;
-                                <span className='text-xs text-white'>
+                                <span className="text-xs text-white">
                                     {user.name}
                                 </span>
                                 &nbsp;
                             </div>
 
                             {user.cursorMessage && (
-                                <div className='mx-4 bg-transparent text-sm border-0 text-white'>
+                                <div className="mx-4 border-0 bg-transparent text-sm text-white">
                                     {user.cursorMessage}
                                 </div>
                             )}

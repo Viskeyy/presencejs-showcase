@@ -11,6 +11,7 @@ import {
 import { presenceConnect } from '../helper/presenceConnect';
 import { Header } from '../components/ChatContainer/Header';
 import { MessageContainer } from '../components/ChatContainer/MessageContainer';
+import { IChannel } from '@yomo/presence';
 const UserCursor = dynamic(
     () => import('../components/UserCursor').then((mod) => mod.UserCursor),
     { ssr: false }
@@ -37,7 +38,7 @@ const defaultUserInfo: UserInfo = {
 };
 
 export default function Home() {
-    const [channel, setChannel] = useState<any>(null);
+    const [channel, setChannel] = useState<IChannel>();
     const [messages, setMessages] = useState<Message[]>([defaultMessage]);
     const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
 
@@ -159,21 +160,22 @@ export default function Home() {
     };
 
     useEffect(() => {
-        if (window) {
-            presenceConnect(
-                setChannel,
-                setMessages,
-                setLoadingState,
-                setOnlineUsers
-            );
-        }
-        // return () => {
-        //     channel?.leave();
-        // };
+        presenceConnect(
+            setChannel,
+            setMessages,
+            setLoadingState,
+            setOnlineUsers
+        );
+        return () => {
+            if (channel) {
+                channel.broadcast('onlineUsers', defaultUserInfo);
+                channel.leave();
+            }
+        };
     }, [channel]);
 
     return (
-        <main className='w-[100vw] h-[100vh] flex flex-col justify-between mx-auto'>
+        <main className="mx-auto flex h-[100vh] w-[100vw] flex-col justify-between">
             <UserCursor
                 channel={channel}
                 currentUser={defaultUserInfo}
@@ -182,12 +184,12 @@ export default function Home() {
             <Header onlineUsers={onlineUsers} />
             <MessageContainer messages={messages} loading={loadingState} />
 
-            <div className='flex flex-nowrap items-center justify-center w-3/5 my-6 relative mx-auto'>
+            <div className="relative mx-auto my-6 flex w-3/5 flex-nowrap items-center justify-center">
                 <textarea
-                    className='min-h-12 rounded-lg p-2 w-full whitespace-nowrap bg-[#171820] focus:outline-none focus:ring-1 focus:ring-neutral-300 border border-[#34323E]'
+                    className={`min-h-12 w-full whitespace-nowrap rounded-lg border border-[#34323E] bg-[#171820] p-2 focus:outline-none focus:border-[${defaultUserInfo.color}]`}
                     disabled={loadingState}
                     style={{ resize: 'none' }}
-                    placeholder='Type your query'
+                    placeholder="Type your query..."
                     value={userInput}
                     rows={1}
                     onChange={(event) => broadcastInputMessage(event)}
@@ -212,11 +214,11 @@ export default function Home() {
                 <button
                     onClick={submitInput}
                     disabled={loadingState}
-                    className='absolute right-2'
+                    className="absolute right-2"
                 >
                     <Image
                         src={'/send-arrow.svg'}
-                        alt='send arrow'
+                        alt="send arrow"
                         width={24}
                         height={24}
                         className={`${

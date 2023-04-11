@@ -45,16 +45,14 @@ const handleReceiveMessage = (
 };
 
 export const presenceConnect = async (
-    setChannel: Dispatch<SetStateAction<IChannel | null>>,
+    setChannel: Dispatch<SetStateAction<IChannel | undefined>>,
     setMessages: Dispatch<SetStateAction<Message[]>>,
     setLoadingState: Dispatch<SetStateAction<boolean>>,
     setOnlineUsers: Dispatch<SetStateAction<UserInfo[]>>
 ) => {
-    const presence = await createPresence({
-        url: 'https://prscd2.allegro.earth/v1',
-        publicKey: process.env.NEXT_PUBLIC_PRESENCE_PUBLIC_KEY,
+    const presence = await createPresence('https://prscd2.allegro.earth/v1', {
         id: currentConnectId,
-        appId: process.env.NEXT_PUBLIC_PRESENCE_APP_KEY,
+        publicKey: process.env.NEXT_PUBLIC_PRESENCE_PUBLIC_KEY,
     });
 
     const channel = presence.joinChannel(
@@ -72,8 +70,8 @@ export const presenceConnect = async (
         }
     );
 
-    channel.subscribePeers((peers) => {
-        setOnlineUsers(peers as any);
+    channel.subscribe('onlineUsers', (onlineUsers: UserInfo[]) => {
+        setOnlineUsers(onlineUsers);
     });
 
     setChannel(channel);

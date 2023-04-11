@@ -14,20 +14,17 @@ export const MyCursor = ({
     user: UserInfo;
     channel: IChannel;
 }) => {
-    // const [currentUser, setCurrentUser] = useState<UserInfo>(user);
+    const cursorElement = useRef<HTMLDivElement>(null);
+
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
-    const [mousePosition, setMousePosition] = useState({
-        mouseX: 0,
-        mouseY: 0,
-    });
 
     const onChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.value === '/') {
             return;
         }
 
-        channel?.updateMetadata({
+        channel?.broadcast('onlineUsers', {
             ...user,
             cursorMessage: e.target.value,
         });
@@ -67,9 +64,13 @@ export const MyCursor = ({
 
         movement$.subscribe((data) => {
             const position = getMousePosition(data.x, data.y);
-            setMousePosition(position);
 
-            channel?.updateMetadata({
+            cursorElement.current?.style.setProperty(
+                'transform',
+                `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
+            );
+
+            channel?.broadcast('onlineUsers', {
                 ...user,
                 mouseX: data.x,
                 mouseY: data.y,
@@ -79,39 +80,37 @@ export const MyCursor = ({
 
     return (
         <div
-            className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
-            style={{
-                transform: `translate3d(${mousePosition.mouseX}px,${mousePosition.mouseY}px,0)`,
-            }}
+            ref={cursorElement}
+            className="pointer-events-none fixed left-0 top-0 z-50 h-full w-full bg-transparent"
         >
             <CursorIcon color={user.color} />
             <div
-                className='absolute top-4 left-4 px-2 py-1'
+                className="absolute left-4 top-4 px-2 py-1"
                 style={{
                     borderRadius: showInput ? 30 : 15,
                     borderTopLeftRadius: showInput ? 10 : 15,
                     backgroundColor: user.color,
                 }}
             >
-                <div className='flex h-full items-center'>
+                <div className="flex h-full items-center">
                     <Image
-                        className='w-4 h-4 rounded-full'
+                        className="h-4 w-4 rounded-full"
                         src={user.avatar}
-                        alt='avatar'
+                        alt="avatar"
                         width={16}
                         height={16}
                     />
                     &nbsp;
-                    <span className='text-[#fff] text-xs'>{user.name}</span>
+                    <span className="text-xs text-[#fff]">{user.name}</span>
                     &nbsp;
                     {/* <Latency cursor={cursor} showLatency={showLatency} /> */}
                 </div>
 
                 {showInput && (
                     <input
-                        className='mx-4 w-72 bg-transparent text-sm border-0 outline-0 text-white'
-                        type='text'
-                        placeholder='Say something...'
+                        className="mx-4 w-72 border-0 bg-transparent text-sm text-white outline-0"
+                        type="text"
+                        placeholder="Say something..."
                         value={inputValue}
                         onChange={onChangeInput}
                         autoFocus
