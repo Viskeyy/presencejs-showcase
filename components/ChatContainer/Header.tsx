@@ -21,7 +21,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                             src={user.avatar as string}
                             alt="avatar"
                             width={24}
-                            height={24}
+                            height={18}
                             className="h-6 w-6 rounded-full border"
                             style={{
                                 zIndex: `${onlineUsers.length - index}`,
