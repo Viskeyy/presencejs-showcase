@@ -16,7 +16,6 @@ export const MyCursor = ({
 }) => {
     const cursorElement = useRef<HTMLDivElement>(null);
 
-    const [currentUser, setCurrentUser] = useState<UserInfo>(user);
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
 
@@ -25,30 +24,30 @@ export const MyCursor = ({
             return;
         }
 
-        channel?.updateMetadata({
-            ...currentUser,
+        channel?.broadcast('onlineUsers', {
+            ...user,
             cursorMessage: e.target.value,
         });
 
         setInputValue(e.target.value);
     };
 
-    // const keyDownHandler = (e: KeyboardEvent) => {
-    // if (e.code === 'Slash') {
-    //     setShowInput(true);
-    // }
-    // if (e.code === 'Escape') {
-    //     setInputValue('');
-    //     setShowInput(false);
-    // }
-    // };
+    const keyDownHandler = (e: KeyboardEvent) => {
+        if (e.code === 'Slash') {
+            setShowInput(true);
+        }
+        if (e.code === 'Escape') {
+            setInputValue('');
+            setShowInput(false);
+        }
+    };
 
-    // useEffect(() => {
-    //     document.addEventListener('keydown', keyDownHandler);
-    //     return () => {
-    //         document.removeEventListener('keydown', keyDownHandler);
-    //     };
-    // }, []);
+    useEffect(() => {
+        document.addEventListener('keydown', keyDownHandler);
+        return () => {
+            document.removeEventListener('keydown', keyDownHandler);
+        };
+    }, []);
 
     useEffect(() => {
         const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -71,53 +70,47 @@ export const MyCursor = ({
                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
             );
 
-            channel?.updateMetadata({
-                ...currentUser,
+            channel?.broadcast('onlineUsers', {
+                ...user,
                 mouseX: data.x,
                 mouseY: data.y,
             });
-
-            setCurrentUser((currentUser) => ({
-                ...currentUser,
-                mouseX: data.x,
-                mouseY: data.y,
-            }));
         });
     }, [channel]);
 
     return (
         <div
             ref={cursorElement}
-            className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'
+            className="pointer-events-none fixed left-0 top-0 z-50 h-full w-full bg-transparent"
         >
             <CursorIcon color={user.color} />
             <div
-                className='absolute top-4 left-4 px-2 py-1'
+                className="absolute left-4 top-4 px-2 py-1"
                 style={{
                     borderRadius: showInput ? 30 : 15,
                     borderTopLeftRadius: showInput ? 10 : 15,
                     backgroundColor: user.color,
                 }}
             >
-                <div className='flex h-full items-center'>
+                <div className="flex h-full items-center">
                     <Image
-                        className='w-4 h-4 rounded-full'
+                        className="h-4 w-4 rounded-full"
                         src={user.avatar}
-                        alt='avatar'
+                        alt="avatar"
                         width={16}
                         height={16}
                     />
                     &nbsp;
-                    <span className='text-[#fff] text-xs'>{user.name}</span>
+                    <span className="text-xs text-[#fff]">{user.name}</span>
                     &nbsp;
                     {/* <Latency cursor={cursor} showLatency={showLatency} /> */}
                 </div>
 
                 {showInput && (
                     <input
-                        className='mx-4 w-72 bg-transparent text-sm border-0 outline-0 text-white'
-                        type='text'
-                        placeholder='Say something...'
+                        className="mx-4 w-72 border-0 bg-transparent text-sm text-white outline-0"
+                        type="text"
+                        placeholder="Say something..."
                         value={inputValue}
                         onChange={onChangeInput}
                         autoFocus

@@ -6,8 +6,10 @@ const MyCursor = dynamic(
     () => import('./MyCursor').then((mod) => mod.MyCursor),
     { ssr: false }
 );
-
-import { OtherCursor } from './OtherCursor';
+const OtherCursor = dynamic(
+    () => import('./OtherCursor').then((mod) => mod.OtherCursor),
+    { ssr: false }
+);
 
 export const UserCursor = ({
     channel,
@@ -19,9 +21,9 @@ export const UserCursor = ({
     onlineUsers: UserInfo[];
 }) => {
     return (
-        <div className='z-50 fixed top-0 left-0 w-full h-full bg-transparent pointer-events-none'>
+        <div className="pointer-events-none fixed left-0 top-0 z-50 h-full w-full bg-transparent">
             <MyCursor user={currentUser} channel={channel} />
-            {/* <OtherCursor userList={onlineUsers} /> */}
+            <OtherCursor userList={onlineUsers} />
         </div>
     );
 };

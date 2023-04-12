@@ -16,23 +16,23 @@ export const MessageContainer = (props: {
     }, [props.messages, props.loading]);
 
     return (
-        <div className='w-full flex-auto overflow-y-auto'>
+        <div className="w-full flex-auto overflow-y-auto">
             {props.messages.map((message, index) => {
                 return (
                     <div
                         key={index}
-                        className={`w-full min-h-20 flex px-[15vw] items-center p-2 gap-2 ${
+                        className={`min-h-20 flex w-full items-center gap-2 p-2 px-[15vw] ${
                             message.role === 'assistant'
                                 ? 'bg-[#211F2D] text-[#64ECAD]'
                                 : 'bg-[#15111C]'
                         }`}
                     >
                         <div
-                            className={`bg-slate-500 ${
+                            className={`self-start bg-slate-500 ${
                                 message.role === 'assistant'
-                                    ? 'self-start'
+                                    ? ''
                                     : 'rounded-full'
-                            } w-6 h-6 shrink-0`}
+                            } h-6 w-6 shrink-0`}
                         >
                             <Image
                                 src={
@@ -42,16 +42,16 @@ export const MessageContainer = (props: {
                                 }
                                 width={24}
                                 height={24}
-                                alt='avatar'
+                                alt="avatar"
                             />
                         </div>
-                        <div className='flex-auto break-all'>
+                        <div className="flex-auto break-all">
                             {message.content}
                         </div>
                     </div>
                 );
             })}
-            <div className='w-full min-h-20 flex px-[15vw] items-center p-2'>
+            <div className="min-h-20 flex w-full items-center p-2 px-[15vw]">
                 <Loading isShow={props.loading} />
             </div>
             <div ref={bottomDiv} />
