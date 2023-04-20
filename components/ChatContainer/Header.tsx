@@ -14,7 +14,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                 Allegro.CollabGPT
             </div>
 
-            <div className="flex">
+            {/* <div className="flex">
                 {onlineUsers.slice(0, 4).map((user, index) => (
                     <div key={user.id} className="-ml-1">
                         <Image
@@ -39,7 +39,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                         <span> +{onlineUsers.length - 4}</span>
                     </div>
                 )}
-            </div>
+            </div> */}
         </div>
     );
 };

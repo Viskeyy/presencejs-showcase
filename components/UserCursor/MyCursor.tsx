@@ -19,35 +19,35 @@ export const MyCursor = ({
     const [showInput, setShowInput] = useState(false);
     const [inputValue, setInputValue] = useState('');
 
-    const onChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.value === '/') {
-            return;
-        }
+    // const onChangeInput = (e: ChangeEvent<HTMLInputElement>) => {
+    //     if (e.target.value === '/') {
+    //         return;
+    //     }
 
-        channel?.broadcast('onlineUsers', {
-            ...user,
-            cursorMessage: e.target.value,
-        });
+    //     channel?.broadcast('onlineUsers', {
+    //         ...user,
+    //         cursorMessage: e.target.value,
+    //     });
 
-        setInputValue(e.target.value);
-    };
+    //     setInputValue(e.target.value);
+    // };
 
-    const keyDownHandler = (e: KeyboardEvent) => {
-        if (e.code === 'Slash') {
-            setShowInput(true);
-        }
-        if (e.code === 'Escape') {
-            setInputValue('');
-            setShowInput(false);
-        }
-    };
+    // const keyDownHandler = (e: KeyboardEvent) => {
+    //     if (e.code === 'Slash') {
+    //         setShowInput(true);
+    //     }
+    //     if (e.code === 'Escape') {
+    //         setInputValue('');
+    //         setShowInput(false);
+    //     }
+    // };
 
-    useEffect(() => {
-        document.addEventListener('keydown', keyDownHandler);
-        return () => {
-            document.removeEventListener('keydown', keyDownHandler);
-        };
-    }, []);
+    // useEffect(() => {
+    //     document.addEventListener('keydown', keyDownHandler);
+    //     return () => {
+    //         document.removeEventListener('keydown', keyDownHandler);
+    //     };
+    // }, []);
 
     useEffect(() => {
         const mouseMove$ = fromEvent<MouseEvent>(document, 'mousemove');
@@ -106,7 +106,7 @@ export const MyCursor = ({
                     {/* <Latency cursor={cursor} showLatency={showLatency} /> */}
                 </div>
 
-                {showInput && (
+                {/* {showInput && (
                     <input
                         className="mx-4 w-72 border-0 bg-transparent text-sm text-white outline-0"
                         type="text"
@@ -115,7 +115,7 @@ export const MyCursor = ({
                         onChange={onChangeInput}
                         autoFocus
                     />
-                )}
+                )} */}
             </div>
         </div>
     );
