@@ -120,9 +120,7 @@ export const UserInput = ({
         <div className="relative mx-auto my-6 flex w-3/5 flex-nowrap items-center justify-center">
             <textarea
                 className={`min-h-12 w-full whitespace-nowrap rounded-lg border border-[#34323E] bg-[#171820] p-2 focus:outline-none 
-                focus:border-[${defaultUserInfo.color}] ${
-                    loadingState ? 'hover:cursor-not-allowed' : ''
-                }`}
+                focus:${loadingState ? 'hover:cursor-not-allowed' : ''}`}
                 disabled={loadingState}
                 style={{ resize: 'none' }}
                 placeholder="Type your query..."
