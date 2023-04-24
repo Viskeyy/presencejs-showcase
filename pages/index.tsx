@@ -148,22 +148,22 @@ export default function Home() {
                 }
             );
 
-            channel?.subscribe(
-                'userJoined',
-                ({ payload }: { payload: UserInfo }) => {
-                    setOnlineUsers((users) => [...users, payload]);
-                }
-            );
-            channel?.subscribe(
-                'userLeft',
-                ({ payload }: { payload: UserInfo }) => {
-                    setOnlineUsers((users) =>
-                        users.filter((user) => user.id !== payload.id)
-                    );
-                }
-            );
+            // channel?.subscribe(
+            //     'userJoined',
+            //     ({ payload }: { payload: UserInfo }) => {
+            //         setOnlineUsers((users) => [...users, payload]);
+            //     }
+            // );
+            // channel?.subscribe(
+            //     'userLeft',
+            //     ({ payload }: { payload: UserInfo }) => {
+            //         setOnlineUsers((users) =>
+            //             users.filter((user) => user.id !== payload.id)
+            //         );
+            //     }
+            // );
 
-            channel.broadcast('userJoined', defaultUserInfo);
+            // channel.broadcast('userJoined', defaultUserInfo);
             setChannel(channel);
         })();
         return () => {
