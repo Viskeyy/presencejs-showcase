@@ -39,8 +39,6 @@ export const UserInput = ({
         userInputSetReceivedMessage(deltaMessage);
     };
     const broadcastUserInputMessage = (deltaMessage: Message) => {
-        console.log('send', deltaMessage);
-
         channel?.broadcast('chatInfo', { ...deltaMessage });
         userInputSetInputMessage(deltaMessage.content);
     };
