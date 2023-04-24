@@ -131,6 +131,7 @@ export default function Home() {
             );
             const presence = await presencePromise;
 
+            // @ts-ignore
             setPageLoadingState(presence?.status === 'open' ? false : true);
 
             const channel = presence.joinChannel('67f1a42b');
