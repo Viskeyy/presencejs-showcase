@@ -1,6 +1,19 @@
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { IChannel } from '@yomo/presence';
 
-export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
+export const Header = ({ channel }: { channel: IChannel | undefined }) => {
+    const [onlineUsers, setOnlineUsers] = useState<UserInfo[]>([]);
+
+    channel?.subscribe('userJoined', ({ payload }: { payload: UserInfo }) => {
+        setOnlineUsers((users) => [...users, payload]);
+    });
+    channel?.subscribe('userLeft', ({ payload }: { payload: UserInfo }) => {
+        setOnlineUsers((users) =>
+            users.filter((user) => user.id !== payload.id)
+        );
+    });
+
     return (
         <div className="flex h-16 w-full items-center justify-between border-b border-[#34323E] px-6">
             <div className="text-sm font-bold text-[#5766F2]">
@@ -14,7 +27,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                 Allegro.CollabGPT
             </div>
 
-            {/* <div className="flex">
+            <div className="flex">
                 {onlineUsers.slice(0, 4).map((user, index) => (
                     <div key={user.id} className="-ml-1">
                         <Image
@@ -39,7 +52,7 @@ export const Header = ({ onlineUsers }: { onlineUsers: UserInfo[] }) => {
                         <span> +{onlineUsers.length - 4}</span>
                     </div>
                 )}
-            </div> */}
+            </div>
         </div>
     );
 };

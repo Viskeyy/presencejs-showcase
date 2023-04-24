@@ -30,18 +30,17 @@ export const UserInput = ({
         channel?.broadcast('loadingState', { isLoading: state });
         userInputSetLoadingState(state);
     };
-
     const appendAndBroadcastMessage = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         userInputAppendMessage(deltaMessage);
     };
-
     const broadcastReceivedMessage = (deltaMessage: Message) => {
         channel?.broadcast('chatInfo', { ...deltaMessage });
         userInputSetReceivedMessage(deltaMessage);
     };
-
     const broadcastUserInputMessage = (deltaMessage: Message) => {
+        console.log('send', deltaMessage);
+
         channel?.broadcast('chatInfo', { ...deltaMessage });
         userInputSetInputMessage(deltaMessage.content);
     };
