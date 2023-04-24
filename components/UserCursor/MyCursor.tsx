@@ -70,13 +70,13 @@ export const MyCursor = ({
                 `translate3d(${position.mouseX}px,${position.mouseY}px,0)`
             );
 
-            channel?.broadcast('onlineUsers', {
-                ...user,
-                mouseX: data.x,
-                mouseY: data.y,
-            });
+            // channel?.broadcast('onlineUsers', {
+            //     ...user,
+            //     mouseX: data.x,
+            //     mouseY: data.y,
+            // });
         });
-    }, [channel]);
+    }, []);
 
     return (
         <div
