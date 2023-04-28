@@ -127,6 +127,7 @@ export default function Home() {
                 {
                     id: currentConnectId,
                     publicKey: process.env.NEXT_PUBLIC_PRESENCE_PUBLIC_KEY,
+                    autoDowngrade: true,
                 }
             );
             const presence = await presencePromise;
